@@ -168,6 +168,13 @@ st.markdown("""
         margin: 20px 0;
         border: 1px solid #f0f0f0;
     }
+    
+    /* 新增：代码块样式 */
+    .stCodeBlock {
+        background-color: #f6f8fa;
+        border-radius: 6px;
+        padding: 16px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -258,12 +265,20 @@ with st.sidebar:
                 
                 if 'choices' in result:
                     ai_reply = result['choices'][0]['message']['content']
+                    
+                    # ---------- 修复AI显示问题 ----------
+                    with st.chat_message("assistant"):
+                        # 检查是否包含代码块标记
+                        if "```" in ai_reply:
+                            # 已经有代码块标记，直接显示
+                            st.markdown(ai_reply)
+                        else:
+                            # 可能是纯文本，用文本框显示
+                            st.text_area("AI回答：", value=ai_reply, height=200, disabled=True)
+                    
+                    st.session_state.messages.append({"role": "assistant", "content": ai_reply})
                 else:
-                    ai_reply = f"出错了：{result}"
-                
-                with st.chat_message("assistant"):
-                    st.markdown(ai_reply)
-                st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                    st.error(f"AI返回错误：{result}")
                 
             except Exception as e:
                 st.error(f"调用AI出错：{e}")
@@ -380,7 +395,12 @@ with right_col:
                 if 'choices' in result:
                     ai_reply = result['choices'][0]['message']['content']
                     st.markdown("### 🔍 AI分析结果")
-                    st.info(ai_reply)
+                    
+                    # 同样修复显示问题
+                    if "```" in ai_reply:
+                        st.markdown(ai_reply)
+                    else:
+                        st.info(ai_reply)
                     
                     # 加到对话历史
                     st.session_state.messages.append({"role": "user", "content": "帮我分析代码"})
